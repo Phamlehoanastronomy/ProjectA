@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#07111f">
+<title>SPHEREx Sky Explorer</title>
+<style>
+:root{
+  --bg:#07111f;--bg2:#0a1728;--panel:#101f32;--panel2:#14263b;--line:rgba(170,198,230,.14);
+  --text:#eef5ff;--muted:#93a8c2;--accent:#7be0d2;--accent2:#8b9cff;--good:#70dfb1;--warn:#ffc878;
+  --shadow:0 18px 55px rgba(0,0,0,.22);--radius:22px;--topbar:rgba(7,17,31,.82);
+}
+body[data-theme="light"]{
+  --bg:#f2f6fb;--bg2:#eaf0f8;--panel:#ffffff;--panel2:#f5f8fc;--line:rgba(29,54,83,.13);
+  --text:#14243a;--muted:#62758e;--accent:#087e83;--accent2:#5368c9;--good:#13875d;--warn:#a86a11;
+  --shadow:0 18px 55px rgba(34,58,86,.09);--topbar:rgba(242,246,251,.88);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:95px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;transition:background .3s,color .3s}
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+.app{min-height:100vh;overflow:hidden}
+.topbar{height:76px;position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,4vw,58px);background:var(--topbar);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:220px}
+.brand-mark{width:38px;height:38px;border-radius:13px;background:linear-gradient(145deg,var(--accent),var(--accent2));display:grid;place-items:center;color:#07111f;box-shadow:0 0 28px color-mix(in srgb,var(--accent) 30%,transparent)}
+.brand-mark svg{width:25px;height:25px}
+.brand strong{display:block;font-size:14px;letter-spacing:.13em}
+.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.19em;margin-top:1px}
+.nav{display:flex;gap:6px;align-items:center}
+.nav a{font-size:12px;text-decoration:none;color:var(--muted);padding:9px 12px;border-radius:10px;transition:.2s}
+.nav a:hover,.nav a.active{color:var(--text);background:var(--panel2)}
+.top-actions{display:flex;align-items:center;gap:9px}
+.icon-btn,.btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;padding:10px 13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s,border .2s,background .2s}
+.icon-btn{width:40px;height:40px;padding:0}
+.btn:hover,.icon-btn:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.btn.primary{background:var(--accent);color:#06121b;border-color:transparent;font-weight:750}
+.btn.ghost{background:transparent}
+.btn.small{padding:7px 10px;font-size:11px;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.container{width:min(1380px,calc(100% - 48px));margin:0 auto}
+.hero{position:relative;padding:76px 0 46px;min-height:340px;isolation:isolate}
+.hero:before{content:"";position:absolute;inset:-76px -20vw 0;z-index:-2;background:radial-gradient(ellipse at 78% 40%,color-mix(in srgb,var(--accent2) 20%,transparent),transparent 38%),radial-gradient(ellipse at 15% 10%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 32%),linear-gradient(115deg,var(--bg),var(--bg2))}
+.hero:after{content:"";position:absolute;inset:-70px -10vw 0;z-index:-1;opacity:.48;background-image:radial-gradient(1px 1px at 15% 20%,#fff 99%,transparent),radial-gradient(1px 1px at 38% 66%,#fff 99%,transparent),radial-gradient(2px 2px at 76% 18%,#fff 99%,transparent),radial-gradient(1px 1px at 90% 55%,#fff 99%,transparent),radial-gradient(1px 1px at 57% 35%,#fff 99%,transparent),radial-gradient(1px 1px at 28% 85%,#fff 99%,transparent);background-size:310px 230px;animation:twinkle 8s ease-in-out infinite alternate}
+.hero-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:36px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:800}
+.dot{width:7px;height:7px;background:var(--good);border-radius:50%;box-shadow:0 0 12px var(--good)}
+.hero h1{font-size:clamp(36px,5.2vw,68px);line-height:1.04;letter-spacing:-.055em;margin:18px 0 18px;max-width:760px}
+.hero h1 span{background:linear-gradient(100deg,var(--accent),#aab8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:670px;color:var(--muted);font-size:15px;margin:0 0 24px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.hero-art{min-height:230px;position:relative;display:grid;place-items:center}
+.orbit{width:min(330px,80vw);aspect-ratio:1;border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);border-radius:50%;position:relative;animation:orbit 32s linear infinite}
+.orbit:before,.orbit:after{content:"";position:absolute;inset:13%;border:1px solid color-mix(in srgb,var(--accent2) 25%,transparent);border-radius:50%;transform:rotateX(66deg) rotate(-25deg)}
+.orbit:after{inset:26%;transform:rotateX(68deg) rotate(55deg)}
+.orbit-core{position:absolute;inset:34%;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e8ffff 0%,var(--accent) 15%,#456e9c 43%,#14213d 72%);box-shadow:0 0 60px color-mix(in srgb,var(--accent) 35%,transparent),inset -18px -16px 35px rgba(0,0,0,.55)}
+.orbit-point{position:absolute;width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 0 20px var(--accent);top:14%;left:17%}
+.orbit-point.p2{top:73%;left:83%;width:7px;height:7px;background:var(--accent2)}
+.art-label{position:absolute;right:0;bottom:12px;color:var(--muted);font-size:10px;letter-spacing:.16em}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 34px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:17px 19px;box-shadow:var(--shadow)}
+.stat .num{font-size:25px;font-weight:800;letter-spacing:-.04em}
+.stat .label{font-size:10px;color:var(--muted);letter-spacing:.13em;text-transform:uppercase;margin-top:3px}
+.section{padding:26px 0 48px}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:18px}
+.section-head h2{font-size:clamp(22px,3vw,30px);letter-spacing:-.04em;margin:5px 0 0}
+.section-head p{color:var(--muted);font-size:12px;margin:0;max-width:520px}
+.kicker{font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--accent);font-weight:800}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.explore-grid{display:grid;grid-template-columns:.94fr 1.06fr;gap:16px}
+.card-pad{padding:22px}
+.card-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.card-title h3{font-size:15px;margin:0;letter-spacing:-.02em}
+.card-title p{font-size:11px;color:var(--muted);margin:4px 0 0}
+.tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 9px;color:var(--muted);font-size:9px;letter-spacing:.08em}
+.tag.live:before{content:"";width:6px;height:6px;background:var(--good);border-radius:50%}
+.form-label{display:block;font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:13px 0 7px}
+.coord-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.field{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px 12px;outline:none;min-width:0}
+.field:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+.coord-unit{position:relative}
+.coord-unit input{padding-right:34px}
+.coord-unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--muted)}
+.dec-row{display:grid;grid-template-columns:82px 1fr 1fr 1fr;gap:8px}
+.target-name-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.hint{font-size:10px;color:var(--muted);margin-top:8px}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:17px}
+.presets{display:flex;gap:7px;flex-wrap:wrap;margin-top:15px}
+.preset{border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:9px;padding:7px 9px;font-size:10px;transition:.2s}
+.preset:hover{border-color:var(--accent);color:var(--text)}
+.statusline{font-size:11px;color:var(--muted);min-height:18px;margin-top:10px}
+.sky-stage{position:relative;min-height:380px;border-radius:16px;overflow:hidden;background:#050c18;border:1px solid rgba(170,198,230,.12)}
+.sky-stage canvas{display:block;width:100%;height:100%;min-height:380px}
+.sky-overlay{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 25%,rgba(2,8,18,.12) 80%)}
+.sky-topline{position:absolute;top:15px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sky-label{background:rgba(5,12,24,.7);border:1px solid rgba(255,255,255,.13);color:#dceaff;border-radius:8px;padding:6px 9px;font-size:9px;letter-spacing:.12em;backdrop-filter:blur(8px)}
+.sky-foot{position:absolute;bottom:14px;left:16px;right:16px;display:flex;justify-content:space-between;gap:10px;color:#c6d5e9;font-size:10px}
+.channel-layout{display:grid;grid-template-columns:1fr 300px;gap:16px}
+.channel-board{padding:20px}
+.channel-grid{display:grid;grid-template-columns:repeat(17,minmax(0,1fr));gap:6px;margin-top:17px}
+.channel{border:1px solid var(--line);background:var(--bg2);color:var(--muted);border-radius:7px;aspect-ratio:1.1;min-width:0;font-size:9px;font-weight:700;transition:.16s}
+.channel:hover{border-color:var(--accent);color:var(--text);transform:translateY(-1px)}
+.channel.selected{background:var(--accent);color:#06121b;border-color:var(--accent);box-shadow:0 0 14px color-mix(in srgb,var(--accent) 24%,transparent)}
+.channel-tools{display:flex;gap:7px;flex-wrap:wrap}
+.band-list{display:grid;gap:9px}
+.band{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel2)}
+.band-top{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:750}
+.band small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.band-bar{height:4px;background:var(--bg);border-radius:9px;margin-top:10px;overflow:hidden}
+.band-bar span{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.note{font-size:10px;color:var(--muted);line-height:1.6;margin-top:13px}
+.timeline-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+.player-card{padding:20px}
+.player-stage{position:relative;min-height:320px;background:#050c18;border:1px solid rgba(170,198,230,.12);border-radius:15px;overflow:hidden;display:grid;place-items:center}
+.player-stage img{width:100%;height:320px;object-fit:contain;background:#050c18}
+.player-time-overlay{position:absolute;top:12px;left:12px;z-index:3;max-width:calc(100% - 24px);padding:9px 12px;border:1px solid rgba(255,255,255,.18);border-radius:11px;background:rgba(3,10,20,.76);color:#eef6ff;backdrop-filter:blur(10px);pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.player-time-overlay span{display:block;font-size:8px;letter-spacing:.15em;color:#9db4ce;text-transform:uppercase}
+.player-time-overlay strong{display:block;font-size:12px;margin-top:2px;font-variant-numeric:tabular-nums}
+.player-time-overlay small{display:block;font-size:9px;color:#b5c7dc;margin-top:2px}
+.timeline-tools{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;align-items:end;margin-top:13px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.timeline-tools label{display:block;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.timeline-tools .field{margin-top:5px;padding:8px 9px;font-size:11px}
+.timeline-tools .time-summary{grid-column:1/-1;color:var(--muted);font-size:10px}
+.speed-control{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;white-space:nowrap}
+.speed-control select{width:76px;padding:7px 8px;font-size:10px}
+.empty-state{text-align:center;padding:28px;color:#9bb0c8;max-width:430px}
+.empty-state .empty-icon{font-size:36px;margin-bottom:10px}
+.empty-state h4{margin:0 0 7px;color:#eaf3ff;font-size:14px}
+.empty-state p{font-size:11px;line-height:1.6;margin:0}
+.player-meta{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:13px 0;font-size:11px}
+.player-meta strong{font-size:12px}
+.player-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.player-controls input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.frame-count{font-size:10px;color:var(--muted);white-space:nowrap}
+.observation-list{display:grid;gap:8px;max-height:365px;overflow:auto;padding-right:3px}
+.obs-item{display:flex;gap:10px;align-items:center;border:1px solid var(--line);background:var(--panel2);padding:10px;border-radius:12px;text-align:left;color:var(--text);width:100%}
+.obs-item.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--panel2))}
+.obs-thumb{width:48px;height:42px;border-radius:8px;object-fit:cover;background:#07111f;flex:none}
+.obs-info{min-width:0;flex:1}
+.obs-info strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.obs-info small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.compare-box{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg2)}
+.compare-box img{width:100%;height:150px;object-fit:contain;background:#050c18}
+.compare-box div{padding:8px 10px;font-size:10px;color:var(--muted)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{padding:20px;min-height:260px}
+.chart-card h3{font-size:14px;margin:0}
+.chart-card p{font-size:10px;color:var(--muted);margin:4px 0 12px}
+.analysis-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
+.analysis-metric{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.analysis-metric span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.1em}
+.analysis-metric strong{display:block;font-size:19px;line-height:1.25;margin:6px 0 3px;overflow-wrap:anywhere}
+.analysis-metric small{display:block;color:var(--muted);font-size:9px;line-height:1.4}
+.analysis-table-card{padding:18px;margin-top:15px}
+.analysis-table-wrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:12px}
+.analysis-table{width:100%;min-width:900px;border-collapse:collapse;font-size:10px}
+.analysis-table th,.analysis-table td{padding:10px 11px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+.analysis-table th{background:var(--panel2);color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;position:sticky;top:0}
+.analysis-table td{color:var(--text)}
+.analysis-table tbody tr:hover{background:color-mix(in srgb,var(--accent) 5%,var(--panel))}
+.table-empty{text-align:center!important;color:var(--muted)!important;padding:24px!important}
+.analysis-status{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px 7px;color:var(--muted);font-size:9px}
+.analysis-status.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
+.analysis-status.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
+.chart-wrap{height:185px;position:relative}
+.chart-wrap svg{width:100%;height:100%;overflow:visible}
+.chart-empty{height:100%;display:grid;place-items:center;color:var(--muted);font-size:11px;text-align:center;padding:15px}
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dropzone{border:1px dashed color-mix(in srgb,var(--accent) 50%,var(--line));border-radius:16px;padding:24px;text-align:center;background:color-mix(in srgb,var(--accent) 4%,var(--panel2));transition:.2s}
+.dropzone.drag{background:color-mix(in srgb,var(--accent) 12%,var(--panel2));border-color:var(--accent)}
+.dropzone .upload-icon{font-size:28px}
+.dropzone h3{font-size:14px;margin:8px 0 4px}
+.dropzone p{font-size:10px;color:var(--muted);margin:0 auto 13px;max-width:380px}
+.file-links{display:grid;gap:10px}
+.file-link{display:flex;gap:12px;align-items:center;text-decoration:none;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel2);transition:.2s}
+.file-link:hover{border-color:var(--accent);transform:translateX(2px)}
+.file-link .link-icon{width:35px;height:35px;border-radius:10px;background:var(--bg);display:grid;place-items:center;color:var(--accent);font-size:16px}
+.file-link strong{display:block;font-size:11px}
+.file-link small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.schema{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:13px;overflow:auto;color:var(--muted);font:10px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.step{padding:17px;border:1px solid var(--line);background:var(--panel);border-radius:16px;position:relative;overflow:hidden}
+.step-num{font-size:28px;font-weight:850;letter-spacing:-.06em;color:color-mix(in srgb,var(--accent) 80%,var(--text));opacity:.9}
+.step h3{font-size:12px;margin:7px 0 5px}
+.step p{font-size:10px;color:var(--muted);margin:0;line-height:1.6}
+.step:after{content:"";position:absolute;width:80px;height:80px;border:1px solid var(--line);border-radius:50%;right:-30px;bottom:-40px}
+.footer{padding:28px 0 42px;border-top:1px solid var(--line);color:var(--muted);font-size:10px}
+.footer-inner{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.footer a{color:var(--accent);text-decoration:none}
+.modal{border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--text);padding:0;width:min(480px,calc(100% - 28px));box-shadow:0 30px 90px rgba(0,0,0,.45)}
+.modal::backdrop{background:rgba(0,0,0,.65);backdrop-filter:blur(4px)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+.modal-head h3{margin:0;font-size:15px}
+.modal-body{padding:18px 20px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.color-control{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 9px;background:var(--panel)}
+.color-control input{width:25px;height:25px;padding:0;border:0;background:transparent}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);background:var(--text);color:var(--bg);border-radius:12px;padding:10px 15px;font-size:11px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:80;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.badge-demo{display:inline-flex;background:rgba(255,200,120,.13);border:1px solid rgba(255,200,120,.3);color:#ffc878;border-radius:999px;padding:4px 7px;font-size:8px;letter-spacing:.1em;font-weight:800}
+.hidden{display:none!important}
+@keyframes twinkle{from{opacity:.25;transform:translateY(0)}to{opacity:.58;transform:translateY(-8px)}}
+@keyframes orbit{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.reveal{animation:fadeUp .6s both}
+@media(max-width:1050px){.nav{display:none}.hero-grid{grid-template-columns:1fr .65fr}.channel-layout{grid-template-columns:1fr}.steps{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.container{width:min(100% - 28px,600px)}.topbar{padding:0 14px;height:66px}.brand{min-width:0}.brand strong{font-size:12px}.brand small{font-size:8px}.top-actions .color-control{display:none}.hero{padding:48px 0 28px}.hero-grid{grid-template-columns:1fr}.hero-art{display:none}.hero h1{font-size:42px}.stats{grid-template-columns:repeat(2,1fr)}.explore-grid,.timeline-grid,.chart-grid,.data-grid{grid-template-columns:1fr}.analysis-summary{grid-template-columns:repeat(2,1fr)}.timeline-tools{grid-template-columns:1fr 1fr}.timeline-tools>button{grid-column:1/-1;justify-self:start}.section{padding:20px 0 35px}.card-pad{padding:17px}.channel-grid{grid-template-columns:repeat(10,minmax(0,1fr))}.sky-stage,.sky-stage canvas{min-height:290px}.steps{grid-template-columns:1fr 1fr}.section-head{align-items:start;flex-direction:column}.player-stage{min-height:250px}.player-stage img{height:250px}}
+@media(max-width:430px){.hero h1{font-size:36px}.dec-row{grid-template-columns:64px 1fr 1fr 1fr;gap:5px}.field{padding:10px 8px;font-size:12px}.coord-row{gap:5px}.channel-grid{grid-template-columns:repeat(8,minmax(0,1fr))}.steps{grid-template-columns:1fr}.analysis-summary{grid-template-columns:1fr 1fr}.timeline-tools{grid-template-columns:1fr}.timeline-tools>button,.timeline-tools .time-summary{grid-column:1}.stats .stat{padding:13px}.stat .num{font-size:21px}.top-actions .btn{padding:8px 10px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body data-theme="dark">
+<div class="app">
+<header class="topbar">
+  <a class="brand" href="#home" aria-label="SPHEREx Sky Explorer">
+    <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(-28 12 12)"/><path d="M18.5 5.5l2-2M4 18l-2 2"/></svg></span>
+    <span><strong>SPHEREx</strong><small>SKY EXPLORER</small></span>
+  </a>
+  <nav class="nav" aria-label="Điều hướng">
+    <a href="#explore">Khám phá</a><a href="#channels">102 kênh phổ</a><a href="#timeline">Dòng thời gian</a><a href="#analysis">Phân tích</a><a href="#data">Dữ liệu</a><a href="#guide">Hướng dẫn</a>
+  </nav>
+  <div class="top-actions">
+    <label class="color-control" title="Tùy chỉnh màu nhấn"><span style="font-size:10px;color:var(--muted)">Màu</span><input type="color" id="accentPicker" value="#7be0d2" aria-label="Chọn màu nhấn"></label>
+    <button class="icon-btn" id="themeBtn" title="Đổi giao diện" aria-label="Đổi giao diện">☼</button>
+    <button class="btn small" id="openAdd">＋ Thêm dữ liệu</button>
+  </div>
+</header>
+
+<main id="home">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="reveal">
+        <div class="eyebrow"><span class="dot"></span> CÔNG CỤ KHÁM PHÁ BẦU TRỜI HỒNG NGOẠI</div>
+        <h1>Nhìn vũ trụ qua <span>102 sắc độ.</span></h1>
+        <p>Chọn một vùng trời, duyệt dữ liệu theo kênh phổ và thời gian, rồi so sánh để tìm những thay đổi đáng chú ý. Một không gian làm việc trực quan cho dữ liệu SPHEREx.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#explore">Bắt đầu khám phá <span>↗</span></a>
+          <a class="btn ghost" href="#guide">Xem quy trình 7 bước</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit"><div class="orbit-core"></div><i class="orbit-point"></i><i class="orbit-point p2"></i></div>
+        <div class="art-label">ALL-SKY INFRARED SURVEY · 0.75–5 μm</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <section class="stats">
+      <div class="stat"><div class="num">102</div><div class="label">Kênh phổ danh định</div></div>
+      <div class="stat"><div class="num">0.75–5.00</div><div class="label">Bước sóng · µm</div></div>
+      <div class="stat"><div class="num">6</div><div class="label">Dải detector lớn</div></div>
+      <div class="stat"><div class="num" id="obsCount">0</div><div class="label">Quan sát đã nạp</div></div>
+    </section>
+
+    <section class="section" id="explore">
+      <div class="section-head">
+        <div><div class="kicker">01 / VỊ TRÍ BẦU TRỜI</div><h2>Xác định vùng quan sát</h2></div>
+        <p>Nhập tọa độ J2000 theo hệ Xích kinh (RA) và Độ nghiêng (DEC). Hệ thống kiểm tra định dạng và chuyển sang độ thập phân.</p>
+      </div>
+      <div class="explore-grid">
+        <div class="card card-pad">
+          <div class="card-title">
+            <div><h3>Tọa độ mục tiêu</h3><p>Nhập theo giờ – phút – giây và độ – phút – giây</p></div>
+            <span class="tag">J2000 / ICRS</span>
+          </div>
+          <label class="form-label" for="targetName">Tên thiên thể (không bắt buộc)</label>
+          <div class="target-name-row"><input class="field" id="targetName" placeholder="Ví dụ: WISE 0855−0714"><button class="btn small" id="clearCoords">Đặt lại</button></div>
+          <label class="form-label">Xích kinh · RA</label>
+          <div class="coord-row">
+            <div class="coord-unit"><input class="field" id="raH" type="number" min="0" max="23" value="8" aria-label="RA giờ"><span>h</span></div>
+            <div class="coord-unit"><input class="field" id="raM" type="number" min="0" max="59" value="55" aria-label="RA phút"><span>m</span></div>
+            <div class="coord-unit"><input class="field" id="raS" type="number" min="0" max="59.999" step="0.001" value="10.831" aria-label="RA giây"><span>s</span></div>
+          </div>
+          <label class="form-label">Độ nghiêng · DEC</label>
+          <div class="dec-row">
+            <select class="field" id="decSign" aria-label="Dấu DEC"><option value="-">−</option><option value="+">＋</option></select>
+            <div class="coord-unit"><input class="field" id="decD" type="number" min="0" max="90" value="7" aria-label="DEC độ"><span>°</span></div>
+            <div class="coord-unit"><input class="field" id="decM" type="number" min="0" max="59" value="14" aria-label="DEC phút"><span>′</span></div>
+            <div class="coord-unit"><input class="field" id="decS" type="number" min="0" max="59.999" step="0.001" value="42.53" aria-label="DEC giây"><span>″</span></div>
+          </div>
+          <div class="hint">Ví dụ theo đề thử thách: WISE 0855 — 08h55m10.831s, −07°14′42.53″.</div>
+          <div class="form-actions">
+            <button class="btn primary" id="validateBtn">Kiểm tra tọa độ</button>
+            <button class="btn" id="openIrsa">Mở SPHEREx Data Explorer ↗</button>
+          </div>
+          <div class="statusline" id="coordStatus" aria-live="polite">Sẵn sàng nhập tọa độ.</div>
+          <div class="presets">
+            <button class="preset" data-preset="wise">WISE 0855</button>
+            <button class="preset" data-preset="barnard">Barnard's Star</button>
+            <button class="preset" data-preset="epsilon">Epsilon Indi B</button>
+            <button class="preset" data-preset="rwaur">RW Aurigae</button>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">
+            <div><h3>Bản đồ vùng trời</h3><p>Khung nhìn minh họa · không phải ảnh quan sát SPHEREx</p></div>
+            <span class="badge-demo">SKY PREVIEW</span>
+          </div>
+	<div class="sky-stage" style="position: relative; height: 420px;">
+ 	   <!-- Bản đồ Aladin tương tác nằm làm nền chính -->
+ 	   <div id="aladin-lite-div" style="width: 100%; height: 100%;"></div>
+ 	   
+  	  <!-- Giữ lại các nhãn hiển thị góc trên/dưới để khớp giao diện và tránh lỗi JS -->
+ 	   <canvas id="skyCanvas" style="display:none;"></canvas>
+ 	   <div class="sky-topline" style="pointer-events: none;"><span class="sky-label" id="skyTarget">TARGET • WISE 0855</span><span class="sky-label">J2000</span>	</div>
+    	<div class="sky-foot" style="pointer-events: none;"><span id="skyRa">RA 08:55:10.831</span><span id="skyDec">DEC -07:14:42.530</span></div>
+	</div>
+          <div class="hint">Sau khi kiểm tra, hãy mở IRSA Data Explorer và dán tọa độ để truy vấn ảnh khoa học thật. Bản đồ nền ở đây chỉ minh họa giao diện.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="channels">
+      <div class="section-head">
+        <div><div class="kicker">02 / PHỔ HỒNG NGOẠI</div><h2>Chọn kênh phổ SPHEREx</h2></div>
+        <p>Chọn một hoặc nhiều kênh trong 102 kênh danh định. Bước sóng chính xác của từng ảnh nên đọc từ metadata/WCS của tệp khoa học.</p>
+      </div>
+      <div class="channel-layout">
+        <div class="card channel-board">
+          <div class="card-title">
+            <div><h3>Channel selector <span class="tag" id="channelCount">1 kênh đang chọn</span></h3><p>Chạm vào ô để bật/tắt kênh tương ứng.</p></div>
+            <div class="channel-tools"><button class="btn small" id="selectAll">Chọn tất cả</button><button class="btn small" id="selectNone">Bỏ chọn</button></div>
+          </div>
+          <div class="channel-grid" id="channelGrid" aria-label="102 kênh phổ"></div>
+          <div class="note">Lưu ý: 102 là số kênh phổ danh định. Tài liệu IRSA cũng mô tả 6 dải detector rộng (Band 1–6); không nên nhầm 6 dải này với 102 kênh phổ riêng lẻ.</div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title"><div><h3>Sáu dải detector</h3><p>Phạm vi bước sóng tổng quát</p></div></div>
+          <div class="band-list">
+            <div class="band"><div class="band-top"><span>Band 1</span><span>0.75–1.09 µm</span></div><small>Near-infrared · R ≈ 39</small><div class="band-bar"><span style="width:18%"></span></div></div>
+            <div class="band"><div class="band-top"><span>Band 2</span><span>1.10–1.62 µm</span></div><small>Near-infrared · R ≈ 41</small><div class="band-bar"><span style="width:29%"></span></div></div>
+            <div class="band"><div class="band-top"><span>Band 3</span><span>1.63–2.41 µm</span></div><small>Near-infrared · R ≈ 41</small><div class="band-bar"><span style="width:43%"></span></div></div>
+            <div class="band"><div class="band-top"><span>Band 4</span><span>2.42–3.82 µm</span></div><small>Mid-infrared · R ≈ 35</small><div class="band-bar"><span style="width:62%"></span></div></div>
+            <div class="band"><div class="band-top"><span>Band 5</span><span>3.83–4.41 µm</span></div><small>Mid-infrared · R ≈ 112</small><div class="band-bar"><span style="width:82%"></span></div></div>
+            <div class="band"><div class="band-top"><span>Band 6</span><span>4.42–5.00 µm</span></div><small>Mid-infrared · R ≈ 128</small><div class="band-bar"><span style="width:100%"></span></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="timeline">
+      <div class="section-head">
+        <div><div class="kicker">03 / DIỄN TIẾN THEO THỜI GIAN</div><h2>Dòng thời gian quan sát</h2></div>
+        <p>Nạp nhiều ảnh có thời điểm khác nhau để phát lại như video, chuyển khung và so sánh trước – sau.</p>
+      </div>
+      <div class="timeline-grid">
+        <div class="card player-card">
+          <div class="card-title">
+            <div><h3>Observation player</h3><p>Phát chuỗi ảnh theo thứ tự thời gian</p></div>
+            <div class="channel-tools"><button class="btn small" id="compareBtn">⇄ So sánh</button><button class="btn small" id="demoBtn">Nạp dữ liệu demo</button></div>
+          </div>
+          <div class="player-stage" id="playerStage">
+            <div class="empty-state"><div class="empty-icon">✧</div><h4>Chưa có ảnh quan sát</h4><p>Thêm tệp JSON/CSV hoặc ảnh để tạo dòng thời gian. Bạn cũng có thể nạp dữ liệu demo để thử bộ điều khiển — dữ liệu demo được đánh dấu riêng.</p></div>
+          </div>
+          <div class="player-meta"><div><strong id="frameTitle">Chưa chọn khung hình</strong><div class="hint" id="frameDetails">0 quan sát được nạp</div></div><span class="tag" id="frameChannel">NO FRAME</span></div>
+          <div class="player-controls">
+            <button class="icon-btn" id="prevFrame" aria-label="Khung trước">◀</button>
+            <button class="btn small primary" id="playBtn">▶ Phát</button>
+            <button class="icon-btn" id="nextFrame" aria-label="Khung sau">▶</button>
+            <input type="range" id="timelineRange" min="0" max="0" value="0" aria-label="Chọn khung hình">
+            <span class="frame-count" id="frameCount">0 / 0</span>
+            <label class="speed-control">Tốc độ <select class="field" id="playbackSpeed" aria-label="Tốc độ phát"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+          </div>
+          <div class="timeline-tools">
+            <label>Từ thời điểm<input class="field" id="timeFrom" type="datetime-local" aria-label="Lọc từ thời điểm"></label>
+            <label>Đến thời điểm<input class="field" id="timeTo" type="datetime-local" aria-label="Lọc đến thời điểm"></label>
+            <button class="btn small" id="clearTimeFilter" type="button">Xóa lọc thời gian</button>
+            <div class="time-summary" id="timeRangeSummary">Thời gian sẽ hiển thị theo dữ liệu quan sát đã nạp.</div>
+          </div>
+          <div class="compare-grid hidden" id="compareGrid"></div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title"><div><h3>Danh sách quan sát</h3><p id="listSubtitle">Đang chờ dữ liệu</p></div><button class="btn small" id="exportBtn">Xuất JSON ↓</button></div>
+          <div class="observation-list" id="observationList"><div class="empty-state"><div class="empty-icon">⌁</div><p>Danh sách sẽ xuất hiện sau khi bạn nạp dữ liệu.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="analysis">
+      <div class="section-head">
+        <div><div class="kicker">04 / PHÂN TÍCH</div><h2>Đọc biến thiên và phổ</h2></div>
+        <p>Biểu đồ được dựng từ các trường wavelength_um và flux trong dữ liệu bạn nạp. Không tự suy diễn giá trị còn thiếu.</p>
+      </div>
+      <div class="chart-grid">
+        <div class="card chart-card"><h3>Phổ theo bước sóng</h3><p>Flux theo wavelength · cần dữ liệu có wavelength_um và flux</p><div class="chart-wrap" id="spectrumChart"><div class="chart-empty">Chưa có dữ liệu phổ để vẽ.<br>Nạp JSON/CSV có wavelength_um và flux.</div></div></div>
+        <div class="card chart-card"><h3>Độ sáng theo thời gian</h3><p>Flux theo thứ tự thời điểm quan sát · chỉ dùng các bản ghi có flux</p><div class="chart-wrap" id="lightCurveChart"><div class="chart-empty">Chưa có chuỗi flux theo thời gian.</div></div></div>
+        <div class="card chart-card"><h3>Cường độ pixel ảnh theo thời gian</h3><p>Thống kê ảnh tải lên · không đồng nghĩa với flux đã hiệu chuẩn</p><div class="chart-wrap" id="imageBrightnessChart"><div class="chart-empty">Chưa có ảnh để thống kê pixel.</div></div></div>
+      </div>
+      <div class="analysis-summary" id="analysisSummary">
+        <div class="analysis-metric"><span>Số quan sát</span><strong>0</strong><small>Chưa có dữ liệu</small></div>
+        <div class="analysis-metric"><span>Bản ghi có flux</span><strong>0</strong><small>Đang chờ CSV/JSON</small></div>
+        <div class="analysis-metric"><span>Ảnh đã thống kê</span><strong>0</strong><small>Đang chờ ảnh</small></div>
+        <div class="analysis-metric"><span>Khoảng thời gian</span><strong>—</strong><small>Chưa xác định</small></div>
+      </div>
+      <div class="card analysis-table-card">
+        <div class="card-title"><div><h3>Bảng phân tích tự động</h3><p>Kiểm tra từng bản ghi, metadata và thống kê ảnh</p></div><button class="btn small" id="exportAnalysisCsv">Xuất bảng CSV ↓</button></div>
+        <div class="analysis-table-wrap"><table class="analysis-table"><thead><tr><th>Quan sát</th><th>Thời điểm</th><th>Kênh</th><th>λ (µm)</th><th>Flux</th><th>Pixel TB</th><th>Pixel median</th><th>Pixel σ</th><th>Min / Max</th><th>Đánh giá</th></tr></thead><tbody id="analysisTableBody"><tr><td colspan="10" class="table-empty">Nạp CSV, JSON hoặc ảnh để tạo bảng phân tích.</td></tr></tbody></table></div>
+        <p class="note">Phân tích ảnh hiện tại là thống kê pixel trên ảnh raster hoặc pixel của FITS Primary HDU. Không tự động nhận dạng thiên thể, hiệu chuẩn thông lượng, trừ nền hay xác nhận phát hiện khoa học.</p>
+      </div>
+    </section>
+
+    <section class="section" id="data">
+      <div class="section-head">
+        <div><div class="kicker">05 / QUẢN LÝ DỮ LIỆU</div><h2>Cập nhật dữ liệu nhanh chóng</h2></div>
+        <p>Nhập dữ liệu mới mà không phải sửa mã nguồn. Có thể thêm từng quan sát, nhập tệp hàng loạt hoặc xuất dữ liệu đã chọn.</p>
+      </div>
+      <div class="data-grid">
+        <div class="card card-pad">
+          <div class="dropzone" id="dropzone">
+            <div class="upload-icon">⇧</div><h3>Kéo thả tệp vào đây</h3>
+            <p>Hỗ trợ JSON, CSV, PNG, JPG, WEBP và FITS ảnh 2D ở Primary HDU. Với FITS nhiều HDU của SPHEREx, nên xử lý/tách ảnh trước bằng công cụ khoa học chuyên dụng.</p>
+            <input type="file" id="fileInput" accept=".json,.csv,.png,.jpg,.jpeg,.webp,.fits,.fit,.fts" multiple hidden>
+            <button class="btn primary" id="chooseFile">Chọn tệp từ máy</button>
+            <div class="hint" id="importStatus">Dữ liệu chỉ được nạp vào phiên làm việc hiện tại.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn small" id="openAdd2">＋ Thêm một quan sát</button><button class="btn small" id="clearData">Xóa dữ liệu đã nạp</button></div>
+          <div class="note">Định dạng JSON/CSV có thể chứa URL ảnh, ngày quan sát, số kênh, bước sóng và flux. Hãy dùng đúng metadata từ tệp gốc.</div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title"><div><h3>Nguồn dữ liệu khoa học</h3><p>Liên kết chính thức để truy vấn và tải dữ liệu</p></div><span class="tag live">PUBLIC ARCHIVE</span></div>
+          <div class="file-links">
+            <a class="file-link" href="https://irsa.ipac.caltech.edu/applications/spherex/" target="_blank" rel="noopener"><span class="link-icon">⌕</span><span><strong>SPHEREx Data Explorer · IRSA</strong><small>Truy vấn ảnh phổ theo tọa độ, thời gian và dải phổ</small></span></a>
+            <a class="file-link" href="https://irsa.ipac.caltech.edu/data/SPHEREx/docs/overview_dr1.html" target="_blank" rel="noopener"><span class="link-icon">▤</span><span><strong>SPHEREx Data Release 1</strong><small>Tổng quan dữ liệu DR1 và sản phẩm khoa học</small></span></a>
+            <a class="file-link" href="https://irsa.ipac.caltech.edu/cloud_access/" target="_blank" rel="noopener"><span class="link-icon">☁</span><span><strong>IRSA Cloud Data Access</strong><small>Kho dữ liệu công khai trên AWS S3</small></span></a>
+            <a class="file-link" href="https://irsa.ipac.caltech.edu/onlinehelp/spherex/spherex/" target="_blank" rel="noopener"><span class="link-icon">ⓘ</span><span><strong>Hướng dẫn sử dụng SPHEREx</strong><small>Thông tin về tìm kiếm, ảnh, bảng và công cụ phân tích</small></span></a>
+          </div>
+          <div class="note">Lưu ý: trang web này là giao diện front-end độc lập. Việc truy vấn trực tiếp kho FITS từ IRSA cần thêm lớp backend/API để xử lý dữ liệu khoa học, kiểm soát CORS và đọc các HDU/WCS.</div>
+        </div>
+      </div>
+      <div class="card card-pad" style="margin-top:16px">
+        <div class="card-title"><div><h3>Mẫu cấu trúc JSON</h3><p>Định dạng gợi ý để cập nhật dữ liệu nhiều quan sát</p></div><button class="btn small" id="copySchema">Sao chép mẫu</button></div>
+        <pre class="schema" id="schemaText">{
+  "observations": [
+    {
+      "id": "obs-001",
+      "date": "2026-11-01T02:15:00Z",
+      "target": "WISE 0855",
+      "ra_deg": 133.795129,
+      "dec_deg": -7.245147,
+      "channel": 12,
+      "wavelength_um": 1.25,
+      "flux": 0.034,
+      "image_url": "https://example.org/observation.png",
+      "source": "SPHEREx DR1",
+      "quality": "good"
+    }
+  ]
+}</pre>
+      </div>
+    </section>
+
+    <section class="section" id="guide">
+      <div class="section-head">
+        <div><div class="kicker">06 / QUY TRÌNH SỬ DỤNG</div><h2>7 bước từ tọa độ đến phát hiện</h2></div>
+        <p>Quy trình tổng quát giúp người mới dễ theo dõi và giúp nhóm trình bày rõ cách website xử lý dữ liệu.</p>
+      </div>
+      <div class="steps">
+        <article class="step"><div class="step-num">01</div><h3>Nhập tọa độ</h3><p>Nhập RA theo giờ–phút–giây và DEC theo độ–phút–giây. Kiểm tra giới hạn và đổi sang độ thập phân.</p></article>
+        <article class="step"><div class="step-num">02</div><h3>Xác định vùng truy vấn</h3><p>Chọn mục tiêu và phạm vi quan sát. Mở IRSA Data Explorer để gửi truy vấn vị trí thực tế.</p></article>
+        <article class="step"><div class="step-num">03</div><h3>Thu thập dữ liệu</h3><p>Tải các ảnh phổ, metadata, thời điểm quan sát và thông tin kênh từ kho dữ liệu công khai.</p></article>
+        <article class="step"><div class="step-num">04</div><h3>Kiểm tra chất lượng</h3><p>Kiểm tra định dạng, cờ chất lượng, dữ liệu thiếu, đơn vị và thứ tự thời gian trước khi hiển thị.</p></article>
+        <article class="step"><div class="step-num">05</div><h3>Chọn 102 kênh</h3><p>Lọc một hoặc nhiều kênh. Đọc bước sóng chính xác từ metadata/WCS thay vì tự gán giá trị.</p></article>
+        <article class="step"><div class="step-num">06</div><h3>Phát và so sánh</h3><p>Phát ảnh theo thời gian, dừng ở từng khung, xem trước–sau và theo dõi thay đổi trong vùng trời.</p></article>
+        <article class="step"><div class="step-num">07</div><h3>Phân tích kết quả</h3><p>Vẽ phổ, đường cong ánh sáng và xuất dữ liệu để kiểm chứng hoặc tiếp tục phân tích chuyên sâu.</p></article>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span>SPHEREx Sky Explorer · Bản prototype front-end phục vụ thử nghiệm và trình bày.</span>
+    <span>Nguồn tham khảo: <a href="https://irsa.ipac.caltech.edu/Missions/spherex.html" target="_blank" rel="noopener">IRSA / NASA</a> · <a href="https://science.nasa.gov/mission/spherex/" target="_blank" rel="noopener">NASA SPHEREx</a></span>
+  </div>
+</footer>
+</div>
+
+<dialog class="modal" id="addDialog">
+  <div class="modal-head"><h3>Thêm một quan sát</h3><button class="icon-btn" id="closeAdd" aria-label="Đóng">×</button></div>
+  <form class="modal-body" id="addForm">
+    <label class="form-label" for="newDate">Thời điểm quan sát</label><input class="field" id="newDate" type="datetime-local" required>
+    <label class="form-label" for="newChannel">Kênh phổ (1–102)</label><input class="field" id="newChannel" type="number" min="1" max="102" value="1" required>
+    <label class="form-label" for="newWave">Bước sóng (µm, nếu có)</label><input class="field" id="newWave" type="number" min="0" max="10" step="0.0001" placeholder="Ví dụ: 1.25">
+    <label class="form-label" for="newFlux">Flux (nếu có)</label><input class="fiel id="newFlux" type="number" step="any" placeholder="Giá trị theo đơn vị trong dữ liệu gốc">
+    <label class="form-label" for="newImage">URL ảnh (nếu có)</label><input class="field" id="newImage" type="url" placeholder="https://...">
+    <label class="form-label" for="newSource">Nguồn / ghi chú</label><input class="field" id="newSource" placeholder="Ví dụ: SPHEREx DR1">
+    <div class="modal-actions"><button type="button" class="btn" id="cancelAdd">Hủy</button><button class="btn primary" type="submit">Lưu quan sát</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const IRSA_URL = "https://irsa.ipac.caltech.edu/applications/spherex/";
+let observations = [];
+let currentIndex = 0;
+let selectedChannels = new Set([1]);
+let playing = false;
+let playTimer = null;
+let compareMode = false;
+let lastCoordinates = null;
+
+function toast(message){
+  const el=$("toast");el.textContent=message;el.classList.add("show");
+  clearTimeout(toast._timer);toast._timer=setTimeout(()=>el.classList.remove("show"),2600);
+}
+function setStatus(message, ok=true){
+  $("coordStatus").textContent=message;
+  $("coordStatus").style.color=ok?"var(--good)":"var(--warn)";
+}
+function pad(n){return String(n).padStart(2,"0")}
+function formatRA(h,m,s){return `${pad(h)}:${pad(m)}:${Number(s).toFixed(3).padStart(6,"0")}`}
+function formatDec(sign,d,m,s){return `${sign==="-"?"−":"+"}${pad(d)}:${pad(m)}:${Number(s).toFixed(3).padStart(6,"0")}`}
+function readCoordinates(){
+  const h=Number($("raH").value),m=Number($("raM").value),s=Number($("raS").value);
+  const sign=$("decSign").value,d=Number($("decD").value),dm=Number($("decM").value),ds=Number($("decS").value);
+  const values=[h,m,s,d,dm,ds];
+  if(values.some(v=>!Number.isFinite(v))) throw new Error("Vui lòng điền đầy đủ các thành phần tọa độ.");
+  if(h<0||h>23||!Number.isInteger(h)||m<0||m>59||!Number.isInteger(m)||s<0||s>=60) throw new Error("RA không hợp lệ: giờ 0–23, phút 0–59, giây từ 0 đến dưới 60.");
+  if(d<0||d>90||!Number.isInteger(d)||dm<0||dm>59||!Number.isInteger(dm)||ds<0||ds>=60) throw new Error("DEC không hợp lệ: độ 0–90, phút 0–59, giây từ 0 đến dưới 60.");
+  if(d===90&&(dm!==0||ds!==0)) throw new Error("Khi DEC bằng 90°, phút và giây phải bằng 0.");
+  const raDeg=15*(h+m/60+s/3600);
+  const decDeg=(sign==="-"?-1:1)*(d+dm/60+ds/3600);
+  return {h,m,s,sign,d,dm,ds,raDeg,decDeg,ra:formatRA(h,m,s),dec:formatDec(sign,d,dm,ds)};
+}
+function drawSky(){
+  const canvas=$("skyCanvas"),ctx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const g=ctx.createRadialGradient(w*.5,h*.48,10,w*.5,h*.5,w*.75);
+  g.addColorStop(0,"#132b48");g.addColorStop(.55,"#09172a");g.addColorStop(1,"#030914");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  let seed=142;
+  const rand=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+  for(let i=0;i<260;i++){
+    const x=rand()*w,y=rand()*h,r=rand()*1.7+.25,a=rand()*.7+.18;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=`rgba(${i%7===0?150:210},${i%5===0?225:235},255,${a})`;ctx.fill();
+  }
+  for(let i=0;i<9;i++){
+    const x=rand()*w,y=rand()*h,r=rand()*2+1;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle="rgba(177,224,255,.8)";ctx.shadowBlur=12;ctx.shadowColor="#8bdfff";ctx.fill();ctx.shadowBlur=0;
+  }
+}
+function updateSkyLabels(){
+  if(!lastCoordinates)return;
+  $("skyRa").textContent=`RA ${lastCoordinates.ra}`;
+  $("skyDec").textContent=`DEC ${lastCoordinates.dec}`;
+  $("skyTarget").textContent=`TARGET · ${$("targetName").value.trim()||"CUSTOM COORDINATE"}`.toUpperCase();
+}
+function validateCoordinates(){
+  try{
+    lastCoordinates=readCoordinates();
+    const name=$("targetName").value.trim()||"Mục tiêu tùy chỉnh";
+    $("coordStatus").textContent=`Hợp lệ · RA ${lastCoordinates.raDeg.toFixed(6)}°, DEC ${lastCoordinates.decDeg.toFixed(6)}°`;
+    $("coordStatus").style.color="var(--good)";
+    updateSkyLabels();
+    toast("Tọa độ hợp lệ theo định dạng J2000.");
+    return true;
+  }catch(err){setStatus(err.message,false);toast(err.message);return false}
+}
+const presets={
+  wise:{name:"WISE 0855",h:8,m:55,s:10.831,sign:"-",d:7,dm:14,ds:42.53},
+  barnard:{name:"Barnard's Star",h:17,m:57,s:48.498,sign:"+",d:4,dm:41,ds:36.114},
+  epsilon:{name:"Epsilon Indi B",h:22,m:4,s:15.744,sign:"-",d:56,dm:47,ds:24.36},
+  rwaur:{name:"RW Aurigae",h:5,m:7,s:49.565,sign:"+",d:30,dm:24,ds:5.131}
+};
+function applyPreset(key){
+  const p=presets[key];if(!p)return;
+  $("targetName").value=p.name;
+  $("raH").value=p.h;$("raM").value=p.m;$("raS").value=p.s;
+  $("decSign").value=p.sign;$("decD").value=p.d;$("decM").value=p.dm;$("decS").value=p.ds;
+  validateCoordinates();
+}
+function buildChannels(){
+  const grid=$("channelGrid");grid.innerHTML="";
+  for(let i=1;i<=102;i++){
+    const b=document.createElement("button");b.className="channel";b.type="button";b.textContent=String(i).padStart(2,"0");b.dataset.channel=i;
+    b.setAttribute("aria-label",`Kênh phổ ${i}`);
+    b.addEventListener("click",()=>{
+      if(selectedChannels.has(i))selectedChannels.delete(i);else selectedChannels.add(i);
+      renderChannels();renderTimeline();
+    });
+    grid.appendChild(b);
+  }
+  renderChannels();
+}
+function renderChannels(){
+  document.querySelectorAll(".channel").forEach(b=>b.classList.toggle("selected",selectedChannels.has(Number(b.dataset.channel))));
+  $("channelCount").textContent=`${selectedChannels.size} kênh đang chọn`;
+}
+function visibleObservations(){
+  const from=$("timeFrom")?.value?new Date($("timeFrom").value).getTime():-Infinity;
+  const to=$("timeTo")?.value?new Date($("timeTo").value).getTime():Infinity;
+  return observations.filter(o=>{
+    if(o.channel&&!selectedChannels.has(Number(o.channel)))return false;
+    if(o.date){const t=new Date(o.date).getTime();if(Number.isFinite(t)&&(t<from||t>to))return false;}
+    return true;
+  }).sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
+}
+function makeThumb(seed=1){
+  const c=document.createElement("canvas");c.width=360;c.height=230;const x=c.getContext("2d");
+  const gr=x.createRadialGradient(180,115,5,180,115,220);gr.addColorStop(0,`hsl(${180+seed*17},55%,25%)`);gr.addColorStop(1,"#030813");x.fillStyle=gr;x.fillRect(0,0,360,230);
+  let s=seed*997;const r=()=>{s=(s*16807)%2147483647;return s/2147483647};
+  for(let i=0;i<100;i++){x.beginPath();x.arc(r()*360,r()*230,r()*1.6+.2,0,Math.PI*2);x.fillStyle=`rgba(220,240,255,${r()*.85})`;x.fill()}
+  x.strokeStyle="rgba(123,224,210,.35)";x.beginPath();x.arc(180,115,38+seed*3,0,Math.PI*2);x.stroke();
+  return c.toDataURL("image/png");
+}
+function addDemoData(){
+  const base=[
+    {id:"demo-01",date:"2026-08-02T00:10:00Z",target:"Demo field",channel:1,wavelength_um:.82,flux:.42,source:"Dữ liệu mô phỏng"},
+    {id:"demo-02",date:"2026-08-03T00:10:00Z",target:"Demo field",channel:2,wavelength_um:1.25,flux:.55,source:"Dữ liệu mô phỏng"},
+    {id:"demo-03",date:"2026-08-04T00:10:00Z",target:"Demo field",channel:3,wavelength_um:1.85,flux:.49,source:"Dữ liệu mô phỏng"},
+    {id:"demo-04",date:"2026-08-05T00:10:00Z",target:"Demo field",channel:4,wavelength_um:2.65,flux:.72,source:"Dữ liệu mô phỏng"},
+    {id:"demo-05",date:"2026-08-06T00:10:00Z",target:"Demo field",channel:5,wavelength_um:3.95,flux:.63,source:"Dữ liệu mô phỏng"}
+  ];
+  observations=base.map((o,i)=>({...o,image_url:makeThumb(i+1),demo:true}));
+  selectedChannels=new Set(base.map(o=>o.channel));
+  currentIndex=0;renderChannels();renderTimeline();renderCharts();toast("Đã nạp 5 quan sát mô phỏng.");
+}
+function getImage(o){
+  const src=o.image_url||o.imageUrl||o.image||"";
+  if(typeof src!=="string")return "";
+  return /^(https?:\/\/|blob:|data:image\/(png|jpeg|jpg|webp|gif);base64,)/i.test(src)?src:"";
+}
+function renderTimeline(){
+  const list=$("observationList"),stage=$("playerStage"),items=visibleObservations();
+  $("obsCount").textContent=observations.length;
+  $("listSubtitle").textContent=`${items.length} quan sát phù hợp với bộ lọc kênh`;
+  $("timelineRange").max=Math.max(0,items.length-1);
+  if(items.length===0){
+    stage.innerHTML='<div class="empty-state"><div class="empty-icon">✧</div><h4>Chưa có ảnh phù hợp</h4><p>Chọn kênh đang có dữ liệu hoặc nhập JSON/CSV/ảnh. Dữ liệu demo có thể dùng để thử giao diện.</p></div>';
+    list.innerHTML='<div class="empty-state"><div class="empty-icon">⌁</div><p>Không có quan sát trong bộ lọc hiện tại.</p></div>';
+    $("frameTitle").textContent="Chưa chọn khung hình";$("frameDetails").textContent=`${observations.length} quan sát đã nạp`;
+    $("frameChannel").textContent="NO FRAME";$("frameCount").textContent="0 / 0";$("timelineRange").value=0;
+    $("compareGrid").classList.add("hidden");
+    $("timeRangeSummary").textContent="Không có quan sát trong khoảng thời gian/kênh đang chọn.";
+    renderCharts();return;
+  }
+  currentIndex=Math.min(currentIndex,items.length-1);
+  const current=items[currentIndex],img=getImage(current);
+  stage.innerHTML="";
+  if(img){
+    const image=document.createElement("img");image.src=img;image.alt=`Ảnh quan sát ${current.id||current.date||""}`;
+    image.onerror=()=>{stage.innerHTML='<div class="empty-state"><h4>Không tải được ảnh</h4><p>Kiểm tra image_url hoặc chọn lại tệp ảnh.</p></div>'};
+    stage.appendChild(image);
+  }else{
+    stage.innerHTML='<div class="empty-state"><div class="empty-icon">◉</div><h4>Quan sát chưa có ảnh</h4><p>Bản ghi metadata đã được nạp. Thêm image_url hoặc tải ảnh tương ứng để hiển thị khung hình.</p></div>';
+  }
+  if(current.date){const overlay=document.createElement("div");overlay.className="player-time-overlay";overlay.innerHTML=`<span>Thời điểm ${current.date_source==="upload_time"?"tải ảnh":"quan sát"}</span><strong>${escapeHtml(formatDateTime(current.date))}</strong><small>${escapeHtml(current.source||"Nguồn chưa ghi")}</small>`;stage.appendChild(overlay);}
+  const badge=current.demo?'<span class="badge-demo">MÔ PHỎNG</span>':"";
+  $("frameTitle").innerHTML=`${escapeHtml(current.target||current.id||"Quan sát")} ${badge}`;
+  $("frameDetails").textContent=`${formatDateTime(current.date)} · ${current.date_source==="upload_time"?"thời điểm tải lên, không phải thời điểm quan sát":"thời điểm trong metadata"} · ${current.source||"Nguồn chưa ghi"}`;
+  $("frameChannel").textContent=current.channel?`CHANNEL ${String(current.channel).padStart(2,"0")}`:"CHANNEL —";
+  $("frameCount").textContent=`${currentIndex+1} / ${items.length}`;$("timelineRange").value=currentIndex;
+  const datedItems=items.filter(o=>o.date&&Number.isFinite(new Date(o.date).getTime()));
+  $("timeRangeSummary").textContent=datedItems.length?`Khoảng thời gian: ${formatDateTime(datedItems[0].date)} — ${formatDateTime(datedItems[datedItems.length-1].date)} · ${items.length} khung hình · giờ hiển thị theo múi giờ máy tính.`:`${items.length} khung hình · chưa có metadata thời gian hợp lệ.`;
+  list.innerHTML="";
+  items.forEach((o,i)=>{
+    const b=document.createElement("button");b.className="obs-item"+(i===currentIndex?" active":"");b.type="button";
+    const thumb=getImage(o);
+    b.innerHTML=`<img class="obs-thumb" alt="" src="${thumb||makeThumb(i+2)}"><span class="obs-info"><strong>${escapeHtml(o.target||o.id||"Quan sát")} ${o.demo?'<span class="badge-demo">DEMO</span>':""}</strong><small>${formatDate(o.date)} · CH ${o.channel??"—"} · ${o.wavelength_um??"—"} µm</small></span>`;
+    b.addEventListener("click",()=>{currentIndex=i;renderTimeline();});
+    list.appendChild(b);
+  });
+  if(compareMode&&items.length>1){
+    const prev=items[Math.max(0,currentIndex-1)];
+    $("compareGrid").classList.remove("hidden");
+    $("compareGrid").innerHTML=`
+      <div class="compare-box">${getImage(prev)?`<img src="${getImage(prev)}" alt="Khung trước">`:"<div class='empty-state'>Chưa có ảnh</div>"}<div>TRƯỚC · ${formatDate(prev.date)}</div></div>
+      <div class="compare-box">${img?`<img src="${img}" alt="Khung hiện tại">`:"<div class='empty-state'>Chưa có ảnh</div>"}<div>HIỆN TẠI · ${formatDate(current.date)}</div></div>`;
+  }else $("compareGrid").classList.add("hidden");
+  renderCharts();
+}
+function escapeHtml(str){return String(str??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function formatDate(v){if(!v)return"Chưa rõ thời điểm";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short"});}
+function formatDateTime(v){if(!v)return"Chưa rõ thời điểm";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"medium"});}
+function median(values){if(!values.length)return NaN;const a=[...values].sort((x,y)=>x-y),m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
+async function analyzeRasterImage(dataUrl){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const scale=Math.min(1,512/img.width,512/img.height),w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
+        const c=document.createElement("canvas");c.width=w;c.height=h;const ctx=c.getContext("2d",{willReadFrequently:true});ctx.drawImage(img,0,0,w,h);
+        const px=ctx.getImageData(0,0,w,h).data,values=[];let sum=0,sum2=0,min=Infinity,max=-Infinity;
+        for(let i=0;i<px.length;i+=4){const lum=.2126*px[i]+.7152*px[i+1]+.0722*px[i+2];values.push(lum);sum+=lum;sum2+=lum*lum;min=Math.min(min,lum);max=Math.max(max,lum)}
+        const mean=sum/values.length,stddev=Math.sqrt(Math.max(0,sum2/values.length-mean*mean));
+        resolve({mean,stddev,min,max,median:median(values),pixel_count:values.length,unit:"mức xám 0–255",method:"Raster pixel statistics",sampled_width:w,sampled_height:h});
+      }catch(e){resolve(null)}
+    };
+    img.onerror=()=>resolve(null);img.src=dataUrl;
+  });
+}
+function renderAnalysisReport(items){
+  const body=$("analysisTableBody"),summary=$("analysisSummary");
+  const fluxRows=items.filter(o=>Number.isFinite(Number(o.flux)));
+  const imageRows=items.filter(o=>o.image_stats&&Number.isFinite(Number(o.image_stats.mean)));
+  const dated=items.filter(o=>o.date&&Number.isFinite(new Date(o.date).getTime())).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const first=dated[0]?.date,last=dated[dated.length-1]?.date;
+  const fluxValues=fluxRows.map(o=>Number(o.flux));
+  const sorted=[...fluxValues].sort((a,b)=>a-b),q1=sorted.length?median(sorted.slice(0,Math.floor(sorted.length/2))):NaN,q3=sorted.length?median(sorted.slice(Math.ceil(sorted.length/2))):NaN;
+  const iqr=q3-q1,low=q1-1.5*iqr,high=q3+1.5*iqr;
+  const cards=[
+    ["Số quan sát",items.length,`${dated.length} bản ghi có thời điểm hợp lệ`],
+    ["Bản ghi có flux",fluxRows.length,fluxRows.length?`Trung vị: ${median(fluxValues).toPrecision(4)}`:"Cần trường flux trong CSV/JSON"],
+    ["Ảnh đã thống kê",imageRows.length,"Thống kê pixel cục bộ"],
+    ["Khoảng thời gian",first?`${formatDate(first)} → ${formatDate(last)}`:"—",first?"Theo metadata thời gian đã nạp":"Chưa có thời điểm hợp lệ"]
+  ];
+  summary.innerHTML=cards.map(c=>`<div class="analysis-metric"><span>${c[0]}</span><strong>${escapeHtml(String(c[1]))}</strong><small>${escapeHtml(String(c[2]))}</small></div>`).join("");
+  if(!items.length){body.innerHTML='<tr><td colspan="10" class="table-empty">Chưa có dữ liệu trong bộ lọc hiện tại.</td></tr>';return;}
+  body.innerHTML=items.map(o=>{
+    const flux=Number(o.flux),hasFlux=Number.isFinite(flux),st=o.image_stats||{},hasImage=Number.isFinite(Number(st.mean));
+    let status=o.quality?`Cờ chất lượng: ${o.quality}`:(hasFlux&&hasImage?"Có flux + ảnh":hasFlux?"Có flux":hasImage?"Đã thống kê pixel":"Thiếu thông số phân tích");
+    let cls=(o.quality||(!hasFlux&&!hasImage))?"warn":"good";
+    if(hasFlux&&fluxRows.length>=4&&Number.isFinite(iqr)&&(flux<low||flux>high)){status="Flux ngoài ngưỡng IQR · cần kiểm tra";cls="warn";}
+    if(o.date_source==="upload_time")status+=" · giờ tải lên";
+    const time=o.date?formatDateTime(o.date):"Chưa rõ";
+    const pixelRange=hasImage?`${Number.isFinite(Number(st.min))?Number(st.min).toPrecision(4):"—"} / ${Number.isFinite(Number(st.max))?Number(st.max).toPrecision(4):"—"}`:"—";
+    return `<tr><td>${escapeHtml(o.target||o.id||"Quan sát")}</td><td>${escapeHtml(time)}</td><td>${o.channel??"—"}</td><td>${Number.isFinite(Number(o.wavelength_um))?Number(o.wavelength_um).toFixed(4):"—"}</td><td>${hasFlux?flux.toPrecision(5):"—"}</td><td>${hasImage?Number(st.mean).toFixed(3):"—"}</td><td>${hasImage&&Number.isFinite(Number(st.median))?Number(st.median).toFixed(3):"—"}</td><td>${hasImage&&Number.isFinite(Number(st.stddev))?Number(st.stddev).toFixed(3):"—"}</td><td>${pixelRange}</td><td><span class="analysis-status ${cls}">${escapeHtml(status)}</span></td></tr>`;
+  }).join("");
+}
+function stepFrame(delta){
+  const items=visibleObservations();if(!items.length)return;
+  currentIndex=(currentIndex+delta+items.length)%items.length;renderTimeline();
+}
+function stopPlay(){
+  playing=false;clearInterval(playTimer);playTimer=null;$("playBtn").textContent="▶ Phát";
+}
+function startPlaybackTimer(){
+  clearInterval(playTimer);
+  const speed=Number($("playbackSpeed")?.value||1);
+  playTimer=setInterval(()=>{const items=visibleObservations();if(items.length<2){stopPlay();return}if(currentIndex>=items.length-1){currentIndex=0}else currentIndex++;renderTimeline();},1200/speed);
+}
+function togglePlay(){
+  const items=visibleObservations();if(items.length<2){toast("Cần ít nhất 2 khung hình để phát.");return}
+  if(playing){stopPlay();return}
+  playing=true;$("playBtn").textContent="Ⅱ Tạm dừng";startPlaybackTimer();
+}
+function renderLineChart(containerId,points,xLabel,yLabel){
+  const container=$(containerId);
+  if(!points.length){container.innerHTML='<div class="chart-empty">Chưa đủ dữ liệu để vẽ biểu đồ.</div>';return}
+  const W=600,H=185,L=46,R=14,T=12,B=30,iw=W-L-R,ih=H-T-B;
+  const xs=points.map(p=>p.x),ys=points.map(p=>p.y);
+  let xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);
+  if(xmin===xmax){xmin-=1;xmax+=1}if(ymin===ymax){ymin-=1;ymax+=1}
+  const X=v=>L+(v-xmin)/(xmax-xmin)*iw,Y=v=>T+ih-(v-ymin)/(ymax-ymin)*ih;
+  const path=points.map((p,i)=>`${i?"L":"M"}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join(" ");
+  let grid="";
+  for(let i=0;i<5;i++){const y=T+i*ih/4;grid+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="var(--line)" stroke-dasharray="3 5"/><text x="${L-8}" y="${y+3}" fill="var(--muted)" font-size="10" text-anchor="end">${(ymax-(ymax-ymin)*i/4).toFixed(2)}</text>`}
+  const dots=points.map(p=>`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="3.5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"><title>${p.label||""}: ${p.y}</title></circle>`).join("");
+  container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${yLabel} theo ${xLabel}">${grid}<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}<text x="${L}" y="${H-7}" fill="var(--muted)" font-size="10">${xLabel}</text><text x="${W-R}" y="${H-7}" fill="var(--muted)" font-size="10" text-anchor="end">${yLabel}</text></svg>`;
+}
+function renderCharts(){
+  const rows=visibleObservations();
+  const spec=rows.filter(o=>Number.isFinite(Number(o.wavelength_um))&&Number.isFinite(Number(o.flux))).sort((a,b)=>Number(a.wavelength_um)-Number(b.wavelength_um));
+  renderLineChart("spectrumChart",spec.map(o=>({x:Number(o.wavelength_um),y:Number(o.flux),label:`CH ${o.channel??"—"}`})),"Wavelength (µm)","Flux");
+  const light=rows.filter(o=>o.date&&Number.isFinite(Number(o.flux))).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  renderLineChart("lightCurveChart",light.map((o,i)=>({x:i+1,y:Number(o.flux),label:formatDateTime(o.date)})),"Thứ tự thời gian","Flux");
+  const brightness=rows.filter(o=>o.image_stats&&Number.isFinite(Number(o.image_stats.mean))).sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+  renderLineChart("imageBrightnessChart",brightness.map((o,i)=>({x:i+1,y:Number(o.image_stats.mean),label:`${formatDate(o.date)} · ${o.image_stats.unit||"pixel"}`})),"Thứ tự thời gian","Pixel mean");
+  renderAnalysisReport(rows);
+}
+function parseCSV(text){
+  const rows=[];let row=[],cell="",quoted=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],n=text[i+1];
+    if(c==='"'&&quoted&&n==='"'){cell+='"';i++}
+    else if(c==='"'){quoted=!quoted}
+    else if(c===","&&!quoted){row.push(cell);cell=""}
+    else if((c==="\n"||c==="\r")&&!quoted){if(c==="\r"&&n==="\n")i++;row.push(cell);if(row.some(v=>v.trim()))rows.push(row);row=[];cell=""}
+    else cell+=c;
+  }
+  row.push(cell);if(row.some(v=>v.trim()))rows.push(row);
+  if(rows.length<2)return[];
+  const headers=rows.shift().map(h=>h.trim().toLowerCase());
+  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,(r[i]??"").trim()])));
+}
+function normalizeObservation(o,i){
+  const get=(...keys)=>{for(const k of keys){if(o[k]!==undefined&&o[k]!==null&&o[k]!=="")return o[k]}return undefined};
+  let date=get("date","observation_date","date_obs","date-obs","timestamp","datetime","time");
+  const mjd=get("mjd");
+  if(!date&&mjd!==undefined&&Number.isFinite(Number(mjd)))date=new Date((Number(mjd)-40587)*86400000).toISOString();
+  const n={id:get("id","obs_id")||`import-${Date.now()}-${i}`,date,target:get("target","object","source_name","name"),channel:Number(get("channel","band_channel"))||undefined,wavelength_um:Number(get("wavelength_um","wavelength","lambda_um"))||undefined,flux:Number(get("flux","flux_value","brightness"))};
+  n.date_source=get("date_source","time_source")|| (date?"metadata":"unknown");
+  n.image_stats=get("image_stats","pixel_stats");
+  if(!n.image_stats){
+    const pixelMean=Number(get("pixel_mean","mean_pixel","image_mean"));
+    const pixelStd=Number(get("pixel_stddev","pixel_std","image_stddev"));
+    if(Number.isFinite(pixelMean))n.image_stats={mean:pixelMean,stddev:Number.isFinite(pixelStd)?pixelStd:undefined,unit:get("pixel_unit","image_unit")||"đơn vị pixel từ bảng dữ liệu",method:"Imported pixel statistics"};
+  }
+  if(!Number.isFinite(n.flux))delete n.flux;
+  if(!Number.isFinite(n.wavelength_um))delete n.wavelength_um;
+  if(!Number.isFinite(n.channel)||n.channel<1||n.channel>102)delete n.channel;
+  n.image_url=get("image_url","image","url","preview_url");
+  n.source=get("source","dataset","release")||"Tệp người dùng";
+  n.quality=get("quality","quality_flag");
+  n.flux_error=Number(get("flux_error","flux_err","uncertainty"));if(!Number.isFinite(n.flux_error))delete n.flux_error;
+  n.ra_deg=Number(get("ra_deg","ra"));if(!Number.isFinite(n.ra_deg))delete n.ra_deg;
+  n.dec_deg=Number(get("dec_deg","dec"));if(!Number.isFinite(n.dec_deg))delete n.dec_deg;
+  return n;
+}
+async function parseFits(file){
+  const buffer=await file.arrayBuffer(),view=new DataView(buffer);let offset=0,header="",foundEnd=false,headerEnd=0;
+  while(offset+2880<=buffer.byteLength&&!foundEnd){
+    const block=new Uint8Array(buffer,offset,2880);
+    for(let i=0;i<2880;i+=80){
+      const card=new TextDecoder("ascii").decode(block.slice(i,i+80));header+=card+"\n";
+      if(card.startsWith("END")){foundEnd=true;headerEnd=offset+i+80;break}
+    }
+    offset+=2880;
+  }
+  if(!foundEnd)throw new Error("Không đọc được FITS header.");
+  const readKey=(key)=>{
+    const line=header.split("\n").find(l=>l.slice(0,8).trim()===key);
+    if(!line)return null;return line.slice(10).split("/")[0].trim().replace(/^'|'$/g,"");
+  };
+  const bitpix=Number(readKey("BITPIX")),naxis=Number(readKey("NAXIS")),nx=Number(readKey("NAXIS1")),ny=Number(readKey("NAXIS2"));
+  if(naxis!==2||!nx||!ny)throw new Error("FITS này không có ảnh 2D trong Primary HDU. Tệp SPHEREx MEF nhiều HDU cần tách/đọc bằng công cụ chuyên dụng trước.");
+  const bytes=Math.abs(bitpix)/8,count=nx*ny,dataOffset=Math.ceil(headerEnd/2880)*2880;
+  if(![8,16,32,-32,-64].includes(bitpix)||dataOffset+count*bytes>buffer.byteLength)throw new Error("Kiểu dữ liệu FITS chưa được hỗ trợ hoặc tệp bị thiếu dữ liệu.");
+  const bscale=Number(readKey("BSCALE")??1),bzero=Number(readKey("BZERO")??0),vals=new Float64Array(count);
+  for(let i=0;i<count;i++){
+    const p=dataOffset+i*bytes;let v;
+    if(bitpix===8)v=view.getUint8(p);
+    else if(bitpix===16)v=view.getInt16(p,false);
+    else if(bitpix===32)v=view.getInt32(p,false);
+    else if(bitpix===-32)v=view.getFloat32(p,false);
+    else v=view.getFloat64(p,false);
+    vals[i]=v*bscale+bzero;
+  }
+  const finite=Array.from(vals).filter(Number.isFinite),valid=[...finite].sort((a,b)=>a-b);
+  if(!valid.length)throw new Error("Ảnh FITS không có pixel hợp lệ.");
+  const sum=finite.reduce((a,b)=>a+b,0),sum2=finite.reduce((a,b)=>a+b*b,0),mean=sum/finite.length;
+  const stats={mean,stddev:Math.sqrt(Math.max(0,sum2/finite.length-mean*mean)),min:valid[0],max:valid[valid.length-1],median:median(valid),pixel_count:finite.length,unit:readKey("BUNIT")||"đơn vị pixel trong FITS",method:"FITS Primary HDU pixel statistics",sampled_width:nx,sampled_height:ny};
+  const metadata={date_obs:readKey("DATE-OBS"),object:readKey("OBJECT"),bunit:readKey("BUNIT"),telescope:readKey("TELESCOP")};
+  const lo=valid[Math.floor(valid.length*.02)],hi=valid[Math.floor(valid.length*.985)]||lo+1;
+  const scale=Math.min(1,900/nx,620/ny),ow=Math.max(1,Math.round(nx*scale)),oh=Math.max(1,Math.round(ny*scale));
+  const c=document.createElement("canvas");c.width=ow;c.height=oh;const ctx=c.getContext("2d"),im=ctx.createImageData(ow,oh);
+  for(let y=0;y<oh;y++)for(let x=0;x<ow;x++){
+    const sx=Math.min(nx-1,Math.floor(x/scale)),sy=Math.min(ny-1,Math.floor(y/scale));
+    let v=vals[sy*nx+sx];if(!Number.isFinite(v))v=lo;
+    let t=Math.max(0,Math.min(1,(v-lo)/(hi-lo||1)));t=Math.pow(t,.65);
+    const k=(y*ow+x)*4;im.data[k]=Math.round(15+210*t);im.data[k+1]=Math.round(25+220*t);im.data[k+2]=Math.round(42+230*t);im.data[k+3]=255;
+  }
+  ctx.putImageData(im,0,0);return {imageUrl:c.toDataURL("image/png"),stats,metadata};
+}
+async function importFiles(files){
+  let added=0;
+  for(const file of files){
+    const ext=file.name.split(".").pop().toLowerCase();
+    try{
+      if(ext==="json"){
+        const data=JSON.parse(await file.text());const arr=Array.isArray(data)?data:(data.observations||data.data||[]);
+        arr.forEach((o,i)=>observations.push(normalizeObservation(o,i)));added+=arr.length;
+      }else if(ext==="csv"){
+        const arr=parseCSV(await file.text());arr.forEach((o,i)=>observations.push(normalizeObservation(o,i)));added+=arr.length;
+      }else if(["png","jpg","jpeg","webp"].includes(ext)){
+        if(file.size>12*1024*1024)throw new Error("Ảnh lớn hơn 12 MB; hãy giảm dung lượng trước khi nhập.");
+        const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+        const imageStats=await analyzeRasterImage(dataUrl),channel=Number(Array.from(selectedChannels)[0]||1);
+        observations.push({id:`image-${Date.now()}`,date:new Date().toISOString(),date_source:"upload_time",target:file.name,channel,image_url:dataUrl,image_stats:imageStats,source:"Ảnh tải lên · thống kê pixel"});added++;
+      }else if(["fits","fit","fts"].includes(ext)){
+        const parsed=await parseFits(file),channel=Number(Array.from(selectedChannels)[0]||1);
+        const date=parsed.metadata.date_obs||new Date().toISOString();
+        observations.push({id:`fits-${Date.now()}`,date,date_source:parsed.metadata.date_obs?"FITS DATE-OBS":"upload_time",target:parsed.metadata.object||file.name,channel,image_url:parsed.imageUrl,image_stats:parsed.stats,source:`FITS Primary HDU · ${parsed.metadata.bunit||"đơn vị pixel"}`,fits_metadata:parsed.metadata});
+        added++;
+      }
+    }catch(err){toast(`${file.name}: ${err.message}`)}
+  }
+  observations.sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
+  currentIndex=0;observations.forEach(o=>{if(o.channel)selectedChannels.add(Number(o.channel))});
+  renderChannels();renderTimeline();renderCharts();
+  $("importStatus").textContent=`Đã nạp ${added} bản ghi từ ${files.length} tệp.`;
+  if(added)toast(`Đã thêm ${added} quan sát.`);
+}
+function exportAnalysisCSV(){
+  const rows=visibleObservations();if(!rows.length){toast("Không có dữ liệu để xuất bảng phân tích.");return}
+  const headers=["target","date","date_source","channel","wavelength_um","flux","flux_error","pixel_mean","pixel_stddev","pixel_min","pixel_max","pixel_unit","quality","source"];
+  const quote=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const lines=[headers.join(","),...rows.map(o=>[o.target,o.date,o.date_source,o.channel,o.wavelength_um,o.flux,o.flux_error,o.image_stats?.mean,o.image_stats?.stddev,o.image_stats?.min,o.image_stats?.max,o.image_stats?.unit,o.quality,o.source].map(quote).join(","))];
+  const blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="spherex-analysis.csv";a.click();URL.revokeObjectURL(url);toast("Đã xuất bảng phân tích CSV.");
+}
+function exportJSON(){
+  if(!observations.length){toast("Chưa có dữ liệu để xuất.");return}
+  const cleaned=observations.map(o=>{const copy={...o};if((copy.image_url||"").startsWith("data:"))delete copy.image_url;return copy;});
+  const blob=new Blob([JSON.stringify({observations:cleaned},null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="spherex-observations.json";a.click();URL.revokeObjectURL(url);toast("Đã xuất tệp JSON.");
+}
+function openIRSA(){
+  let text="";
+  if(lastCoordinates)text=`${lastCoordinates.raDeg.toFixed(7)}, ${lastCoordinates.decDeg.toFixed(7)}`;
+  else{
+    try{lastCoordinates=readCoordinates();text=`${lastCoordinates.raDeg.toFixed(7)}, ${lastCoordinates.decDeg.toFixed(7)}`}catch(e){text=$("targetName").value.trim()}
+  }
+  if(text&&navigator.clipboard?.writeText)navigator.clipboard.writeText(text).then(()=>toast("Đã sao chép tọa độ. Dán vào ô Coordinates or Object Name tại IRSA.")).catch(()=>toast("IRSA đã mở. Hãy sao chép tọa độ thủ công."));
+  window.open(IRSA_URL,"_blank","noopener");
+}
+function setTheme(theme){
+  document.body.dataset.theme=theme;
+  $("themeBtn").textContent=theme==="dark"?"☼":"☾";
+  $("themeBtn").title=theme==="dark"?"Chuyển sang ban ngày":"Chuyển sang ban đêm";
+}
+function setAccent(value){document.documentElement.style.setProperty("--accent",value)}
+function setupEvents(){
+  $("validateBtn").addEventListener("click",validateCoordinates);
+  $("openIrsa").addEventListener("click",openIRSA);
+  $("clearCoords").addEventListener("click",()=>{ $("targetName").value="";$("raH").value=0;$("raM").value=0;$("raS").value=0;$("decSign").value="+";$("decD").value=0;$("decM").value=0;$("decS").value=0;lastCoordinates=null;setStatus("Đã đặt lại tọa độ.");updateSkyLabels()});
+  document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>applyPreset(b.dataset.preset)));
+  $("selectAll").addEventListener("click",()=>{selectedChannels=new Set(Array.from({length:102},(_,i)=>i+1));renderChannels();renderTimeline()});
+  $("selectNone").addEventListener("click",()=>{selectedChannels.clear();renderChannels();renderTimeline()});
+  $("prevFrame").addEventListener("click",()=>stepFrame(-1));$("nextFrame").addEventListener("click",()=>stepFrame(1));$("playBtn").addEventListener("click",togglePlay);
+  $("timelineRange").addEventListener("input",e=>{currentIndex=Number(e.target.value);renderTimeline()});
+  ["timeFrom","timeTo"].forEach(id=>$(id).addEventListener("change",()=>{currentIndex=0;renderTimeline()}));
+  $("clearTimeFilter").addEventListener("click",()=>{$("timeFrom").value="";$("timeTo").value="";currentIndex=0;renderTimeline();toast("Đã bỏ lọc thời gian.")});
+  $("playbackSpeed").addEventListener("change",()=>{if(playing)startPlaybackTimer()});
+  $("compareBtn").addEventListener("click",()=>{compareMode=!compareMode;$("compareBtn").textContent=compareMode?"Ẩn so sánh":"⇄ So sánh";renderTimeline()});
+  $("demoBtn").addEventListener("click",addDemoData);
+  $("exportBtn").addEventListener("click",exportJSON);
+  $("exportAnalysisCsv").addEventListener("click",exportAnalysisCSV);
+  $("chooseFile").addEventListener("click",()=>$("fileInput").click());
+  $("fileInput").addEventListener("change",e=>{if(e.target.files.length)importFiles(Array.from(e.target.files));e.target.value=""});
+  $("dropzone").addEventListener("dragover",e=>{e.preventDefault();$("dropzone").classList.add("drag")});
+  $("dropzone").addEventListener("dragleave",()=>$("dropzone").classList.remove("drag"));
+  $("dropzone").addEventListener("drop",e=>{e.preventDefault();$("dropzone").classList.remove("drag");if(e.dataTransfer.files.length)importFiles(Array.from(e.dataTransfer.files))});
+  $("clearData").addEventListener("click",()=>{stopPlay();observations=[];currentIndex=0;renderTimeline();renderCharts();$("importStatus").textContent="Đã xóa dữ liệu trong phiên làm việc.";toast("Đã xóa dữ liệu.")});
+  $("themeBtn").addEventListener("click",()=>setTheme(document.body.dataset.theme==="dark"?"light":"dark"));
+  $("accentPicker").addEventListener("input",e=>setAccent(e.target.value));
+  $("copySchema").addEventListener("click",()=>navigator.clipboard?.writeText($("schemaText").textContent).then(()=>toast("Đã sao chép cấu trúc JSON.")));
+  $("openAdd").addEventListener("click",openAddDialog);$("openAdd2").addEventListener("click",openAddDialog);
+  $("closeAdd").addEventListener("click",()=>$("addDialog").close());$("cancelAdd").addEventListener("click",()=>$("addDialog").close());
+  $("addForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const date=new Date($("newDate").value).toISOString(),channel=Number($("newChannel").value);
+    if(channel<1||channel>102){toast("Kênh phải nằm trong khoảng 1–102.");return}
+    const o={id:`manual-${Date.now()}`,date,target:$("targetName").value||"Quan sát mới",channel,source:$("newSource").value||"Nhập thủ công"};
+    const wave=$("newWave").value,flux=$("newFlux").value,url=$("newImage").value.trim();
+    if(wave!=="")o.wavelength_um=Number(wave);if(flux!=="")o.flux=Number(flux);if(url)o.image_url=url;
+    observations.push(o);selectedChannels.add(channel);observations.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    currentIndex=observations.findIndex(x=>x.id===o.id);renderChannels();renderTimeline();$("addDialog").close();$("addForm").reset();toast("Đã thêm quan sát.");
+  });
+}
+function openAddDialog(){
+  $("newDate").value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+  $("newChannel").value=Array.from(selectedChannels)[0]||1;$("addDialog").showModal();
+}
+function init(){
+  buildChannels();drawSky();setupEvents();applyPreset("wise");
+  $("themeBtn").textContent="☼";
+  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){document.querySelectorAll(`.nav a[href="#${e.target.id}"]`).forEach(a=>a.classList.add("active"))}}),{threshold:.25});
+  document.querySelectorAll("main section[id]").forEach(s=>observer.observe(s));
+}
+init();
+})();
+</script>
+<!-- Thư viện CSS và JS của Aladin Lite -->
+<link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
+<script type="text/javascript" src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
+
+<script type="text/javascript">
+    let aladin;
+    A.init.then(() => {
+        // Khởi tạo bản đồ bầu trời vào khung chứa
+        aladin = A.aladin('#aladin-lite-div', {
+            survey: "P/DSS2/color",          // Ảnh bầu trời có màu sắc
+            fov: 1.5,                        // Góc nhìn ban đầu
+            target: "133.795129 -7.245147",  // Tọa độ mục tiêu ban đầu
+            showReticle: true,               // Hiện tâm ngắm
+            showZoomControl: true,           // Hiện nút phóng to/thu nhỏ
+            showFullscreenControl: true      // Hiện nút toàn màn hình
+        });
+
+        // Lấy tọa độ khi người dùng bấm chuột vào bản đồ
+        aladin.on('click', function(object) {
+            if (!object) return;
+            let raDeg = object.ra;
+            let decDeg = object.dec;
+            aladin.gotoRaDec(raDeg, decDeg);
+            console.log("Tọa độ được chọn:", raDeg, decDeg);
+        });
+    });
+</script>
+</body>
+</html>
